@@ -194,7 +194,6 @@ module Lita
             user = User.find_by_id(user_from_data) || User.create(user_from_data)
             return if from_self?(user)
 
-            puts("user for new: #{user.id} #{user.name} #{user.mention_name}")
             dispatch_me_message(user)
           end
         end
