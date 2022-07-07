@@ -40,8 +40,10 @@ module Lita
 
         def body
           normalized_text = nil
-          if data["text"]
-            normalized_text = data["text"].sub(/^\s*<@#{robot_id}>/, "@#{robot.mention_name}")
+          if data['subtype'] == 'message_changed'
+            normalized_text = generate_normalized_text(data['message']['text'])
+          elsif data['text']
+            normalized_text = generate_normalized_text(data['text'])
           end
 
           normalized_text = remove_formatting(normalized_text) unless normalized_text.nil?
@@ -50,6 +52,10 @@ module Lita
             |total, att| total.concat parse_attachment(att)
           }
           lines.compact.join("\n")
+        end
+
+        def generate_normalized_text(message_text)
+          normalized_text = message_text.sub(/^\s*<@#{robot_id}>/, "@#{robot.mention_name}")
         end
 
         def parse_attachment(attachment)
@@ -170,32 +176,35 @@ module Lita
 
         def handle_message
           return unless supported_subtype?
-          return if data["user"] == 'USLACKBOT'        
 
           case data["subtype"]
           when "message_deleted"
-            user_from_data = data['previous_message']['user']
-            user = User.find_by_id(user_from_data) || User.create(user_from_data)
+            user = generate_user_from_previous
             return if from_self?(user)
             
             message = create_message(user, previous_message=data['previous_message'])
             response = Response.new(message, nil) #use nil as the pattern bots need to make their own assessment
             robot.trigger(:message_deleted, response)
           when "message_changed"
-            user_from_data = data['previous_message']['user']
-            user = User.find_by_id(user_from_data) || User.create(user_from_data)
+            user = generate_user_from_previous
             return if from_self?(user)
 
             message = create_message(user, previous_message=data['previous_message'])
             response = Response.new(message, nil) #use nil as the pattern bots need to make their own assessment
             robot.trigger(:message_changed, response)
           else
+            # should be a new message
             user_from_data = data['user']
             user = User.find_by_id(user_from_data) || User.create(user_from_data)
             return if from_self?(user)
 
             dispatch_me_message(user)
           end
+        end
+
+        def generate_user_from_previous
+          user_from_data = data['previous_message']['user']
+          user = User.find_by_id(user_from_data) || User.create(user_from_data)
         end
 
         def handle_reaction
