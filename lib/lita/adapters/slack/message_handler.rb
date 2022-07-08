@@ -40,8 +40,10 @@ module Lita
 
         def body
           normalized_text = nil
-          if data["text"]
-            normalized_text = data["text"].sub(/^\s*<@#{robot_id}>/, "@#{robot.mention_name}")
+          if data['subtype'] == 'message_changed'
+            normalized_text = generate_normalized_text(data['message']['text'])
+          elsif data['text']
+            normalized_text = generate_normalized_text(data['text'])
           end
 
           normalized_text = remove_formatting(normalized_text) unless normalized_text.nil?
@@ -50,6 +52,10 @@ module Lita
             |total, att| total.concat parse_attachment(att)
           }
           lines.compact.join("\n")
+        end
+
+        def generate_normalized_text(message_text)
+          normalized_text = message_text.sub(/^\s*<@#{robot_id}>/, "@#{robot.mention_name}")
         end
 
         def parse_attachment(attachment)
@@ -124,17 +130,22 @@ module Lita
           data["channel"]
         end
 
-        def dispatch_me_message(user)
+        def create_message(user, previous_message=nil)
           room = Lita::Room.find_by_id(channel)
           extensions = { timestamp: data["ts"], attachments: data["attachments"] }
           extensions[:thread_ts] = data["thread_ts"] if data["thread_ts"]
+          extensions[:previous_message] = data["previous_message"] if data["previous_message"]
           source = SlackSource.new(user: user, room: room || channel, extensions: extensions)
           source.private_message! if channel && channel[0] == "D"
           message = Message.new(robot, body, source)
           message.command! if source.private_message?
           message.extensions[:slack] = extensions
+          return message
+        end
+
+        def dispatch_me_message(user, previous_message=nil)
           log.debug("Dispatching message to Lita from #{user.id}.")
-          robot.receive(message)
+          robot.receive(create_message(user, previous_message))
         end
 
         def from_self?(user)
@@ -165,21 +176,35 @@ module Lita
 
         def handle_message
           return unless supported_subtype?
-          return if data["user"] == 'USLACKBOT'
-
-          user = User.find_by_id(data["user"]) || User.create(data["user"])
-
-          return if from_self?(user)
 
           case data["subtype"]
           when "message_deleted"
-            robot.trigger(:message_deleted, data)
+            user = generate_user_from_previous
+            return if from_self?(user)
+            
+            message = create_message(user, previous_message=data['previous_message'])
+            response = Response.new(message, nil) #use nil as the pattern bots need to make their own assessment
+            robot.trigger(:message_deleted, response)
           when "message_changed"
-            robot.trigger(:message_changed, data)
+            user = generate_user_from_previous
+            return if from_self?(user)
+
+            message = create_message(user, previous_message=data['previous_message'])
+            response = Response.new(message, nil) #use nil as the pattern bots need to make their own assessment
+            robot.trigger(:message_changed, response)
           else
-            puts('dispatch')
+            # should be a new message
+            user_from_data = data['user']
+            user = User.find_by_id(user_from_data) || User.create(user_from_data)
+            return if from_self?(user)
+
             dispatch_me_message(user)
           end
+        end
+
+        def generate_user_from_previous
+          user_from_data = data['previous_message']['user']
+          user = User.find_by_id(user_from_data) || User.create(user_from_data)
         end
 
         def handle_reaction
