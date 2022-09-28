@@ -9,7 +9,7 @@ describe Lita::Adapters::Slack::RTMConnection, lita: true do
     thread.join
   end
 
-  subject { described_class.new(robot, config, rtm_start_response) }
+  subject { described_class.new(robot, config, rtm_connect_response) }
 
   let(:api) { instance_double("Lita::Adapters::Slack::API") }
   let(:registry) { Lita::Registry.new }
@@ -18,7 +18,7 @@ describe Lita::Adapters::Slack::RTMConnection, lita: true do
   let(:channel) { Lita::Adapters::Slack::SlackChannel.new('C2147483705', 'general', 1360782804, 'U023BECGF', metadata) }
   let(:metadata) { Hash.new }
 
-  let(:rtm_start_response) do
+  let(:rtm_connect_response) do
     Lita::Adapters::Slack::TeamData.new(
       [],
       Lita::Adapters::Slack::SlackUser.new('U12345678', 'carl', nil, raw_user_data),
@@ -39,14 +39,14 @@ describe Lita::Adapters::Slack::RTMConnection, lita: true do
   describe ".build" do
     before do
       allow(Lita::Adapters::Slack::API).to receive(:new).with(config).and_return(api)
-      allow(api).to receive(:rtm_start).and_return(rtm_start_response)
+      allow(api).to receive(:rtm_connect).and_return(rtm_connect_response)
     end
 
-    it "constructs a new RTMConnection with the results of rtm.start data" do
+    it "constructs a new RTMConnection with the results of rtm.connect data" do
       expect(described_class.build(robot, config)).to be_an_instance_of(described_class)
     end
 
-    it "creates users with the results of rtm.start data" do
+    it "creates users with the results of rtm.connect data" do
       expect_any_instance_of(Lita::Adapters::Slack::RTMConnection).to receive(:fork).and_yield do
         expect(Lita.logger).to receive(:debug).with("Inserting 1 users")
         expect(Lita::Adapters::Slack::UserCreator).to receive(:create_users)
@@ -55,7 +55,7 @@ describe Lita::Adapters::Slack::RTMConnection, lita: true do
       described_class.build(robot, config)
     end
 
-    it "creates rooms with the results of rtm.start data" do
+    it "creates rooms with the results of rtm.connect data" do
       expect_any_instance_of(Lita::Adapters::Slack::RTMConnection).to receive(:fork).and_yield do
         expect(Lita.logger).to receive(:debug).with("Inserting 1 channels")
         expect(Lita::Adapters::Slack::RoomCreator).to receive(:create_rooms)
