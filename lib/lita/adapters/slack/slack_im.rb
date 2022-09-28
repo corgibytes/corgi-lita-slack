@@ -5,7 +5,9 @@ module Lita
       class SlackIM
         class << self
           def from_data_array(ims_data)
-            ims_data.map { |im_data| from_data(im_data) }
+            unless ims_data.nil?
+              ims_data.map { |im_data| from_data(im_data) }
+            end
           end
 
           def from_data(im_data)
