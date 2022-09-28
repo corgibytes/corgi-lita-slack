@@ -17,7 +17,9 @@ module Lita
 
           # @api private
           def from_data_array(users_data)
-            users_data.map { |user_data| from_data(user_data) }
+            unless users_data.nil?
+              users_data.map { |user_data| from_data(user_data) }
+            end
           end
         end
 
