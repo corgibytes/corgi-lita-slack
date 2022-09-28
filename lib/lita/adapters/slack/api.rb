@@ -151,8 +151,7 @@ module Lita
             SlackIM.from_data_array(response_data["ims"]),
             SlackUser.from_data(response_data["self"]),
             SlackUser.from_data_array(response_data["users"]),
-            SlackChannel.from_data_array(response_data["channels"]) +
-              SlackChannel.from_data_array(response_data["groups"]),
+            SlackChannel.from_data_array(response_data["groups"]),
             response_data["url"],
           )
           Lita.logger.debug("Finished building TeamData")
