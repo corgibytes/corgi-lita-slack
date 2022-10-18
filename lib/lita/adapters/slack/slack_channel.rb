@@ -18,7 +18,9 @@ module Lita
 
           # @api private
           def from_data_array(channels_data)
+            unless channels_data.nil?
             channels_data.map { |channel_data| from_data(channel_data) }
+            end
           end
         end
 

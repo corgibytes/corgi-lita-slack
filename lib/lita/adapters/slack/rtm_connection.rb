@@ -17,7 +17,7 @@ module Lita
 
         class << self
           def build(robot, config)
-            team_data = API.new(config).rtm_start
+            team_data = API.new(config).rtm_connect
             new(robot, config, team_data)
           end
         end
@@ -64,7 +64,7 @@ module Lita
             # Slack periodically closes the websocket connection
             if event.code.to_s == '1006'
               queue.delete(@websocket) if queue
-              @team_data = API.new(@config).rtm_start
+              @team_data = API.new(@config).rtm_connect
               @im_mapping = IMMapping.new(API.new(@config), @team_data.ims)
               @websocket_url = @team_data.websocket_url
               @robot_id = @team_data.self.id

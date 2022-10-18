@@ -15,7 +15,9 @@ module Lita
         end
 
         def add_mappings(ims)
-          ims.each { |im| add_mapping(im) }
+          unless ims.nil?
+            ims.each { |im| add_mapping(im) }
+          end
         end
 
         def im_for(user_id)
