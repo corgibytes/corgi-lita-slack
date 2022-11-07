@@ -1,6 +1,6 @@
 Gem::Specification.new do |spec|
   spec.name          = "corgi-lita-slack"
-  spec.version       = "2.0.4"
+  spec.version       = "2.0.5"
   spec.authors       = ["Liz Glasser"]
   spec.description   = %q{Lita adapter for Slack.}
   spec.summary       = %q{Lita adapter for Slack.}
@@ -13,6 +13,7 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
+  spec.add_runtime_dependency "redis", "4.7.1"
   spec.add_runtime_dependency "eventmachine"
   spec.add_runtime_dependency "faraday"
   spec.add_runtime_dependency "faye-websocket", ">= 0.8.0"
