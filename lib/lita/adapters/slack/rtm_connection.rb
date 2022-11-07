@@ -32,13 +32,17 @@ module Lita
           @robot_id = team_data.self.id
 
           fork do
-            Lita.logger.debug("Inserting #{team_data.users.size} users")
-            UserCreator.create_users(team_data.users, robot, @robot_id)
-            Lita.logger.debug("Done inserting users.")
+            unless team_data.users.nil?
+              Lita.logger.debug("Inserting #{team_data.users.size} users")
+              UserCreator.create_users(team_data.users, robot, @robot_id)
+              Lita.logger.debug("Done inserting users.")
+            end
 
-            Lita.logger.debug("Inserting #{team_data.channels.size} channels")
-            RoomCreator.create_rooms(team_data.channels, robot)
-            Lita.logger.debug("Done inserting channels.")
+            unless team_data.channels.nil?
+              Lita.logger.debug("Inserting #{team_data.channels.size} channels")
+              RoomCreator.create_rooms(team_data.channels, robot)
+              Lita.logger.debug("Done inserting channels.")
+            end
           end
         end
 
